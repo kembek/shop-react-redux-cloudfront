@@ -24,22 +24,40 @@ export default function CSVFileImport({ url, title }: CSVFileImportProps) {
   };
 
   const uploadFile = async () => {
-    const response = await axios({
-      method: "GET",
-      url,
-      params: {
-        fileName: encodeURIComponent(file?.name || ""),
-      },
-    });
-    console.log("File to upload: ", file?.name || "");
-    console.log("Uploading to: ", response.data);
-    const result = await axios({
-      url: response.data.signedURL || "",
-      method: "PUT",
-      data: file,
-    });
-    console.log("Result: ", result);
-    setFile(undefined);
+    const authToken = localStorage.getItem("authorization_token");
+
+    if (!authToken) {
+      alert("Auth token should be provided");
+      return;
+    }
+
+    try {
+      const response = await axios({
+        method: "GET",
+        url,
+        params: {
+          fileName: encodeURIComponent(file?.name || ""),
+        },
+        headers: {
+          Authorization: `Basic ${authToken.trim()}`,
+        },
+      });
+      console.log("File to upload: ", file?.name || "");
+      console.log("Uploading to: ", response.data);
+
+      const result = await axios({
+        url: response.data.signedURL || "",
+        method: "PUT",
+        data: file,
+      });
+      console.log("Result: ", result);
+      alert("File uploaded successfully");
+
+      setFile(undefined);
+    } catch (error) {
+      console.log("@@@ Error: ", error);
+      alert("Access denied");
+    }
   };
   return (
     <Box>
